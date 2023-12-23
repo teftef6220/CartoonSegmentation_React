@@ -136,3 +136,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+output_images/
+run_segmentation.ipynb
+
+/examples
+
+
+# react
+
+/use_react/backend/node_modules
