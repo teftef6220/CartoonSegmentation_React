@@ -39,15 +39,19 @@ async def process_image(file: UploadFile = File(...)):
     if not allowed_file(file.filename):
         raise HTTPException(status_code=400, detail="Invalid file type.")
 
-    # ファイル保存
+    # アップロードされた画像を保存
     file_path = UPLOAD_FOLDER / file.filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # 画像のファイル名を取得
+    file_base_name = os.path.splitext(os.path.basename(file.filename))[0]
+    image_urls = []
+
     # 画像処理
     img = cv2.imread(str(file_path))
     #########
-    # 画像処理のロジック
+
     ckpt = r'models/AnimeInstanceSegmentation/rtmdetl_e60.ckpt'
 
     mask_thres = 0.3
@@ -71,6 +75,8 @@ async def process_image(file: UploadFile = File(...)):
     nb_object = len(list(zip(instances.bboxes, instances.masks)))
 
     for ii, (xywh, mask) in enumerate(zip(instances.bboxes, instances.masks)):
+        
+        
         color = get_color(ii)
 
         mask_alpha = 0.5
@@ -90,32 +96,48 @@ async def process_image(file: UploadFile = File(...)):
 
         ## draw mask and cutout
         mask_uint8 = mask.astype(np.uint8) * 255
-        # masked_img = cv2.bitwise_and(img, img, mask = mask)##アルファチャンネル使わないときはこれ
         img_with_alpha[:, :, 3] = mask_uint8
+        # masked_img = cv2.bitwise_and(img, img, mask = mask)##アルファチャンネル使わないときはこれ
+
         # cv2.imwrite(f'output_images/masked_seg_{ii}_{img_name}.png', img_with_alpha)
         
         # draw mask
-        p = mask.astype(np.float32)
-        blend_mask = np.full((im_h, im_w, 3), color, dtype=np.float32)
-        alpha_msk = (mask_alpha * p)[..., None]
-        alpha_ori = 1 - alpha_msk
-        drawed = drawed * alpha_ori + alpha_msk * blend_mask
+        # p = mask.astype(np.float32)
+        # blend_mask = np.full((im_h, im_w, 3), color, dtype=np.float32)
+        # alpha_msk = (mask_alpha * p)[..., None]
+        # alpha_ori = 1 - alpha_msk
+        # drawed = drawed * alpha_ori + alpha_msk * blend_mask
+
+        #make saving folder
+        if ii == 0:
+            processed_img_dir = PROCESSED_FOLDER / file_base_name
+            processed_img_dir.mkdir(exist_ok=True)
+                    
+        # 処理された画像を保存
+        processed_file_name = file_base_name + "seg" + str(ii) + ".png"
+        processed_path = processed_img_dir / processed_file_name
+        cv2.imwrite(str(processed_path), img_with_alpha) 
+
+        image_url = f"http://127.0.0.1:8000/processed/{file_base_name}/{processed_file_name}"
+        image_urls.append(image_url)
+
     #########
+    print(image_urls )
+    return {"message": "File successfully processed", "imageUrl": image_urls}
 
-    # 処理された画像を保存
-    processed_path = PROCESSED_FOLDER / file.filename
-    cv2.imwrite(str(processed_path), img_with_alpha) # ここで img_with_alpha を img に置き換え
+# @app.get("/processed/{filename}")
+# async def uploaded_file(filename: str):
+#     file_path = PROCESSED_FOLDER / filename
+#     if not file_path.is_file():
+#         raise HTTPException(status_code=404, detail="File not found. ----------")
+#     return FileResponse(str(file_path))
 
-    # クライアントに返すURLを生成（サーバーのURLを適切に設定してください）
-    image_url = f"http://127.0.0.1:8000/processed/{file.filename}"
-    return {"message": "File successfully processed", "imageUrl": image_url}
-
-@app.get("/processed/{filename}")
-async def uploaded_file(filename: str):
-    file_path = PROCESSED_FOLDER / filename
-    if not file_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found.")
-    return FileResponse(str(file_path))
+@app.get("/processed/{file_path:path}")
+async def get_processed_file(file_path: str):
+    full_path = PROCESSED_FOLDER / file_path
+    if not full_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(full_path))
 
 if __name__ == "__main__":
     import uvicorn

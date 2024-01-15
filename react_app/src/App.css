@@ -11,8 +11,9 @@
   padding: 5px;
 }
 
-.image-display,
-.result-display {
+
+.image-display
+{
   margin-top: 20px;
   border: 1px solid black; /* 黒い枠 */
   width: 300px; /* 希望のサイズに合わせて調整 */
@@ -20,7 +21,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  object-fit: contain;
+}
+
+.result-display {
+  margin-top: 20px;
+  border: 1px solid black; /* 黒い枠 */
+  width: 800px; /* 希望のサイズに合わせて調整 */
+  height: 400px; /* 希望のサイズに合わせて調整 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .save-button {
