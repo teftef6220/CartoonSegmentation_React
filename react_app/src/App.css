@@ -1,19 +1,23 @@
 .App {
+  background-color: rgb(255, 255, 255); /* 背景色を黒に設定 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: start;
+  padding-top: 100px;
 }
 
 .image-uploader {
   margin-top: 20px;
-  border: 1px solid red; /* 赤枠 */
+  border: 1px solid rgb(0, 0, 0); /* 赤枠 */
   padding: 5px;
 }
 
-
+/* result-image */
 .image-display
 {
+
+  
   margin-top: 20px;
   border: 1px solid black; /* 黒い枠 */
   width: 300px; /* 希望のサイズに合わせて調整 */
@@ -23,23 +27,49 @@
   align-items: center;
 }
 
-.result-display {
-  margin-top: 20px;
-  border: 1px solid black; /* 黒い枠 */
-  width: 800px; /* 希望のサイズに合わせて調整 */
-  height: 400px; /* 希望のサイズに合わせて調整 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.result-display img {
+  /* チェッカーボード (擬似的なαチャンネル) */
+  background-image: 
+    linear-gradient(45deg, rgba(128, 128, 128, 0.2) 25%, transparent 25%), /* 透明度を半分に */
+    linear-gradient(-45deg, rgba(128, 128, 128, 0.2) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(128, 128, 128, 0.2) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(128, 128, 128, 0.2) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  
+  border: 2px solid black; 
+  object-fit: contain; 
+  max-width: calc((90% - 1px) / 3); /* 3列に収まるように幅を設定 */
+  height: auto; /* 高さは自動調整 */
+  margin-bottom: 10px; /* 下に間隔 */
 }
 
+.result-display img:hover {
+  transform: scale(1.1);
+}
+
+.result-display img.selected-image {
+  border: 2px solid red;
+}
+
+.result-display { 
+  width: 900px; 
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  justify-content: flex-start; /* 左揃えにする */
+  gap: 20px; /* 画像間の隙間 */
+}
+
+/* result-image */
 .save-button {
   margin-top: 20px;
   border: 1px solid green; /* 緑色の枠 */
 }
 
-.image-display img,
-.result-display img {
+.image-display img{
   max-width: 100%;
   max-height: 100%;
   object-fit: contain; /* これにより画像が枠内に収まります */
