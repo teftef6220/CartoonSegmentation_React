@@ -142,7 +142,7 @@ run_segmentation.ipynb
 
 examples/
 output_images/
-processed/
+# processed/
 uploads/
 
 
