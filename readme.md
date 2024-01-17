@@ -1,5 +1,60 @@
-# CartoonSegmentation
+# CartoonSegmentation-React
+This repository is a React frontend for segmentation and subject extraction using **[CartoonSegmentation](https://github.com/CartoonSegmentation/CartoonSegmentation)**.<br>
+It is based on this [GitHub repository](https://github.com/CartoonSegmentation/CartoonSegmentation)<br>
+Please check the original repository for more information.<br>
+sincerely thanks to the authors for their work.<br>
 
+
+<p float="center">
+<img src = ./assets/demo_01.gif width="100%" height="100%">
+</p>
+
+## Installation
+
+```bash
+git clone https://github.com/teftef6220/CartoonSegmentation_React.git
+```
+create a pip environment and install the requirements
+```bash
+python -m venv .venv
+# Windows
+.\.venv\Scripts\activate
+# Linux
+source .venv/bin/activate
+```
+
+install the requirements
+```bash
+cd CartoonSegmentation_React
+# python requirements
+pip install -r requirements.txt
+# node requirements
+npm install
+```
+## Download models
+
+```bash
+huggingface-cli lfs-enable-largefiles .
+mkdir models
+git clone https://huggingface.co/dreMaz/AnimeInstanceSegmentation models/AnimeInstanceSegmentation
+```
+
+## Usage
+
+run the backend server
+```bash
+python fast_api.py
+```
+run the frontend server
+```bash
+cd react-app
+npm start
+```
+
+**or run start_ui.bat (Windows) or start_ui.sh (Linux)**
+
+
+# CartoonSegmentation
 Implementations of the paper _Instance-guided Cartoon Editing with a Large-scale Dataset_, including an instance segmentation for cartoon/anime characters and some visual techniques built around it.
 
 
