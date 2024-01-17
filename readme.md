@@ -14,6 +14,7 @@ sincerely thanks to the authors for their work.<br>
 
 ```bash
 git clone https://github.com/teftef6220/CartoonSegmentation_React.git
+cd CartoonSegmentation_React
 ```
 create a pip environment and install the requirements
 ```bash
@@ -26,7 +27,6 @@ source .venv/bin/activate
 
 install the requirements
 ```bash
-cd CartoonSegmentation_React
 # python requirements
 pip install -r requirements.txt
 # node requirements
