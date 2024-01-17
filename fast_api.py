@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from pathlib import Path
 import shutil
 import cv2
+import glob
 
 from PIL import Image
 import numpy as np
@@ -124,6 +125,23 @@ async def process_image(file: UploadFile = File(...)):
     #########
     print(image_urls )
     return {"message": "File successfully processed", "imageUrl": image_urls}
+
+
+@app.post("/delete_image")
+async def delete_processed_file():
+    full_path = PROCESSED_FOLDER 
+    if not full_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    # delete only sub folder not file
+    # os.rmdir(full_path)
+    all_file = glob.glob(str(full_path) + '/*')
+
+    for folder in all_file:
+        if os.path.isdir(folder):
+            shutil.rmtree(folder) # フォルダごと削除
+        else:
+            pass
+    return {"message": "File successfully deleted"}
 
 # @app.get("/processed/{filename}")
 # async def uploaded_file(filename: str):

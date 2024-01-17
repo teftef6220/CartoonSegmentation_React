@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import './App.css';
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
 
   const [file, setFile] = useState(null);
 
+  // 画像のアップロード
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file){
@@ -18,6 +20,7 @@ function App() {
     }
   };
   
+  // 画像処理の関数
   const handleProcessImage = async () => {
     try {
       const formData = new FormData();
@@ -43,12 +46,12 @@ function App() {
 
   };
 
+  // 画像の保存
   const handleSaveImage = () => {
     if (!selectedImage) {
       alert('No image selected.');
       return;
     }
-  
     const link = document.createElement('a');
     link.href = selectedImage;
     link.download = 'selected-image.png';
@@ -58,9 +61,34 @@ function App() {
     document.body.removeChild(link);
   };
 
+  // 画像の選択 一時的に選択された画像を状態に保存
   const selectImage = (imageUrl) => {
     setSelectedImage(imageUrl);
   };
+
+
+  // processed フォルダの中身のサブフォルダを削除
+  const handleDelete = async () => {
+    const userConfirmed = window.confirm("本当に実行しますか？");
+    if (userConfirmed) {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/delete_image', {
+          method: 'POST',
+        });
+      if (response.ok) {
+          console.log("Folder contents deleted successfully");
+        } else {
+          console.log("Failed to delete folder contents");
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    } else {
+      console.log("Cancelled");
+    }
+  };
+
+
   return (
     <div className="App">
       <h1 style={{ marginLeft: '20px', color: 'black' }}>Cartoon-Segmentation</h1>
@@ -86,7 +114,13 @@ function App() {
           ))}
         </div>
         <button onClick={handleSaveImage} className="save-button">Save Image</button>
+        <button onClick={handleDelete} className = "delete-button">Delete catch</button>
       </div>
+
+      <footer>
+
+        <p className = "page-footer">&copy; 2024 @hanyingcl</p>
+      </footer>
     </div>
   );
 }
