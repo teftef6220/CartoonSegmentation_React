@@ -51,6 +51,8 @@ async def process_image(file: UploadFile = File(...)):
 
     # 画像処理
     img = cv2.imread(str(file_path))
+
+    background_mask = np.ones(img.shape[:2], dtype=np.uint8) * 255
     #########
 
     ckpt = r'models/AnimeInstanceSegmentation/rtmdetl_e60.ckpt'
@@ -67,7 +69,7 @@ async def process_image(file: UploadFile = File(...)):
     )
 
     x = 0.5 ## 取りたい画像の大きさによって変える
-    drawed = img.copy()
+
     im_h, im_w = img.shape[:2]
     img_with_alpha = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
 
@@ -78,30 +80,8 @@ async def process_image(file: UploadFile = File(...)):
     for ii, (xywh, mask) in enumerate(zip(instances.bboxes, instances.masks)):
         
         
-        color = get_color(ii)
-
-        mask_alpha = 0.5
-        linewidth = max(round(sum(img.shape) / 2 * 0.003), 2)
-
-        # draw bbox
-        p1, p2 = (int(xywh[0]), int(xywh[1])), (int(xywh[2] + xywh[0]), int(xywh[3] + xywh[1]))
-        # cv2.rectangle(drawed, p1, p2, color, thickness=linewidth, lineType=cv2.LINE_AA)
-
-        threshold_w = x * (int(im_w)/nb_object)
-        threshold_h = x * (int(im_h)/nb_object)
-
-
-        if int(xywh[2]) < threshold_w  and  int(xywh[3]) < threshold_h:
-            print("too small")
-            continue
-
-        ## draw mask and cutout
-        mask_uint8 = mask.astype(np.uint8) * 255
-        img_with_alpha[:, :, 3] = mask_uint8
         # masked_img = cv2.bitwise_and(img, img, mask = mask)##アルファチャンネル使わないときはこれ
-
         # cv2.imwrite(f'output_images/masked_seg_{ii}_{img_name}.png', img_with_alpha)
-        
         # draw mask
         # p = mask.astype(np.float32)
         # blend_mask = np.full((im_h, im_w, 3), color, dtype=np.float32)
@@ -109,13 +89,34 @@ async def process_image(file: UploadFile = File(...)):
         # alpha_ori = 1 - alpha_msk
         # drawed = drawed * alpha_ori + alpha_msk * blend_mask
 
+        # color = get_color(ii)
+        # mask_alpha = 0.5
+        # linewidth = max(round(sum(img.shape) / 2 * 0.003), 2)
+        # draw bbox
+        # p1, p2 = (int(xywh[0]), int(xywh[1])), (int(xywh[2] + xywh[0]), int(xywh[3] + xywh[1]))
+        # cv2.rectangle(drawed, p1, p2, color, thickness=linewidth, lineType=cv2.LINE_AA)
+
+        # calc threshold
+        threshold_w = x * (int(im_w)/nb_object)
+        threshold_h = x * (int(im_h)/nb_object)
+        if int(xywh[2]) < threshold_w  and  int(xywh[3]) < threshold_h:
+            print("too small")
+            continue
+
+        ## draw mask and cutout
+        mask_uint8 = mask.astype(np.uint8) * 255
+        img_with_alpha[:, :, 3] = mask_uint8
+
+        # background_mask processing
+        background_mask[mask.astype(bool)] = 0
+
         #make saving folder
         if ii == 0:
             processed_img_dir = PROCESSED_FOLDER / file_base_name
             processed_img_dir.mkdir(exist_ok=True)
                     
         # 処理された画像を保存
-        processed_file_name = file_base_name + "seg" + str(ii) + ".png"
+        processed_file_name = file_base_name + f"seg_{ii:04}_.png"
         processed_path = processed_img_dir / processed_file_name
         cv2.imwrite(str(processed_path), img_with_alpha) 
 
@@ -123,6 +124,17 @@ async def process_image(file: UploadFile = File(...)):
         image_urls.append(image_url)
 
     #########
+    # background_mask processing
+    img_with_alpha[:, :, 3] = background_mask
+
+    # save background image and url
+    BG_file_name = file_base_name + f"seg_BG.png"
+    background_image_url = f"http://127.0.0.1:8000/processed/{file_base_name}/{BG_file_name}"
+    background_path = processed_img_dir / BG_file_name
+    image_urls.append(background_image_url)
+    cv2.imwrite(str(background_path), img_with_alpha)
+
+
     print(image_urls )
     return {"message": "File successfully processed", "imageUrl": image_urls}
 
