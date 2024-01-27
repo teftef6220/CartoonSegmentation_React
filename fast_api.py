@@ -8,6 +8,9 @@ import glob
 
 from PIL import Image
 import numpy as np
+from pytoshop.user import nested_layers
+from pytoshop.enums import Compression
+import pytoshop
 import os
 
 from animeinsseg import AnimeInsSeg, AnimeInstances
@@ -49,10 +52,14 @@ async def process_image(file: UploadFile = File(...)):
     file_base_name = os.path.splitext(os.path.basename(file.filename))[0]
     image_urls = []
 
-    # 画像処理
-    img = cv2.imread(str(file_path))
+    # 画像の読み込みと初期化
+    img = cv2.imread(str(file_path)) 
+    im_h, im_w = img.shape[:2] 
+    img_with_alpha = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA) #　BGR -> BGRA
 
-    background_mask = np.ones(img.shape[:2], dtype=np.uint8) * 255
+    background_mask = np.ones(img.shape[:2], dtype=np.uint8) * 255 # make init background mask
+
+    psd = pytoshop.core.PsdFile(num_channels=3, height=im_h, width=im_w)    # make init psd file and save
     #########
 
     ckpt = r'models/AnimeInstanceSegmentation/rtmdetl_e60.ckpt'
@@ -69,9 +76,6 @@ async def process_image(file: UploadFile = File(...)):
     )
 
     x = 0.5 ## 取りたい画像の大きさによって変える
-
-    im_h, im_w = img.shape[:2]
-    img_with_alpha = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
 
     # instances.bboxes, instances.masks will be None, None if no obj is detected
 
@@ -119,13 +123,37 @@ async def process_image(file: UploadFile = File(...)):
         processed_file_name = file_base_name + f"seg_{ii:04}_.png"
         processed_path = processed_img_dir / processed_file_name
         cv2.imwrite(str(processed_path), img_with_alpha) 
+    
 
         image_url = f"http://127.0.0.1:8000/processed/{file_base_name}/{processed_file_name}"
         image_urls.append(image_url)
 
+        # save subjects in psd layer
+
+        # print("------------------",img_with_alpha.shape,type(img_with_alpha[:, :, 0]),im_h,im_w)
+        img_with_alpha_psd = img_with_alpha.copy()
+        
+        layer = pytoshop.layers.LayerRecord(
+                                        name=f"seg_{ii:04}",
+                                        opacity=255,
+                                        visible=True,
+                                        top=0,
+                                        left=0,
+                                        bottom=im_h,
+                                        right=im_w,
+                                        channels = {
+                                                0: pytoshop.layers.ChannelImageData(img_with_alpha_psd[:, :, 2], compression=1),
+                                                1: pytoshop.layers.ChannelImageData(img_with_alpha_psd[:, :, 1], compression=1),
+                                                2: pytoshop.layers.ChannelImageData(img_with_alpha_psd[:, :, 0], compression=1),
+                                                -1: pytoshop.layers.ChannelImageData(img_with_alpha_psd[:, :, 3], compression=1),
+                                        },
+                                    )
+        psd.layer_and_mask_info.layer_info.layer_records.append(layer)
+
     #########
     # background_mask processing
     img_with_alpha[:, :, 3] = background_mask
+    img_with_alpha_bg =img_with_alpha.copy()
 
     # save background image and url
     BG_file_name = file_base_name + f"seg_BG.png"
@@ -134,6 +162,28 @@ async def process_image(file: UploadFile = File(...)):
     image_urls.append(background_image_url)
     cv2.imwrite(str(background_path), img_with_alpha)
 
+    # append BG in psd layer
+    
+    BG_layer = pytoshop.layers.LayerRecord(
+                                    name=f"BG",
+                                    opacity=255,
+                                    visible=True,
+                                    top=0,
+                                    left=0,
+                                    bottom=im_h,
+                                    right=im_w,
+                                    channels = {
+                                                0: pytoshop.layers.ChannelImageData(img_with_alpha_bg[:, :, 2], compression=1),
+                                                1: pytoshop.layers.ChannelImageData(img_with_alpha_bg[:, :, 1], compression=1),
+                                                2: pytoshop.layers.ChannelImageData(img_with_alpha_bg[:, :, 0], compression=1),
+                                                -1: pytoshop.layers.ChannelImageData(img_with_alpha_bg[:, :, 3], compression=1),
+                                        },
+                                )
+    psd.layer_and_mask_info.layer_info.layer_records.append(BG_layer)
+
+    # save BG in psd layer
+    with open((processed_img_dir / "psd_data.psd"), "wb") as f:
+        psd.write(f)
 
     print(image_urls )
     return {"message": "File successfully processed", "imageUrl": image_urls}
