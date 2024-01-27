@@ -28,6 +28,11 @@ source .venv/bin/activate
 install the requirements
 ```bash
 # python requirements
+pip install -U openmim
+mim install mmengine
+mim install "mmcv>=2.0.0"
+mim install mmdet
+pip install -r requirements.txt
 pip install -r requirements.txt
 # node requirements
 npm install
@@ -54,6 +59,11 @@ npm start
 
 **or run start_ui.bat (Windows) or start_ui.sh (Linux)**
 
+## Photoshop Layer Mask
+you can use the output of the backend server as a layer mask in photoshop.<br>
+<p float="center">
+<img src = ./assets/psd_add.png width="100%" height="100%">
+</p>
 
 # CartoonSegmentation
 Implementations of the paper _Instance-guided Cartoon Editing with a Large-scale Dataset_, including an instance segmentation for cartoon/anime characters and some visual techniques built around it.
