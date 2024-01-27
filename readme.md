@@ -33,7 +33,7 @@ mim install mmengine
 mim install "mmcv>=2.0.0"
 mim install mmdet
 pip install -r requirements.txt
-pip install -r requirements.txt
+pip install pytoshop -I --no-cache-dir
 # node requirements
 npm install
 ```
