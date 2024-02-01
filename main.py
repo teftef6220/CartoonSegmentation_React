@@ -44,15 +44,11 @@ def process_image():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         
-        # ここで画像処理を行います
-        # 例: PILを使用して画像を開き、何らかの処理を行う
         img = cv2.imread(file_path)
 
         ##################################
-        # 画像処理のロジックをここに実装...
 
         ckpt = r'models/AnimeInstanceSegmentation/rtmdetl_e60.ckpt'
-        # ckpt = "I:/CartoonSegmentation/models/AnimeInstanceSegmentation/rtmdetl_e60.ckpt"
 
         mask_thres = 0.3
         instance_thres = 0.3
@@ -117,7 +113,6 @@ def process_image():
         return jsonify({'message': 'File successfully processed','imageUrl': request.host_url + 'processed/' + filename}), 200
         # return jsonify({'imageUrl': request.host_url + 'processed/' + filename}), 200
 
-# 処理された画像をクライアントに提供するルート
 @app.route('/processed/<filename>')
 def uploaded_file(filename):
     print("here")

@@ -181,12 +181,17 @@ async def process_image(file: UploadFile = File(...)):
                                 )
     psd.layer_and_mask_info.layer_info.layer_records.append(BG_layer)
 
+    
+
     # save BG in psd layer
+    # os.makedirs(processed_img_dir / "psd_dir",exist_ok=True)
+    psd_image_url = f"http://127.0.0.1:8000/processed/{file_base_name}/psd_data.psd"
     with open((processed_img_dir / "psd_data.psd"), "wb") as f:
         psd.write(f)
 
     print(image_urls )
-    return {"message": "File successfully processed", "imageUrl": image_urls}
+    
+    return {"message": "File successfully processed", "imageUrl": image_urls,"psdUrl": psd_image_url,}
 
 
 @app.post("/delete_image")
@@ -215,9 +220,12 @@ async def delete_processed_file():
 @app.get("/processed/{file_path:path}")
 async def get_processed_file(file_path: str):
     full_path = PROCESSED_FOLDER / file_path
+    # print(full_path)
     if not full_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(str(full_path))
+
+
 
 if __name__ == "__main__":
     import uvicorn
